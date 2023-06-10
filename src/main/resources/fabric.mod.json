@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "labyrinth-extras",
+  "version": "${version}",
+  "name": "labyrinth-extras",
+  "description": "A private mod for the LabyrinthMC server, adds some stuff I needed to add in an ugly way!",
+  "authors": [
+    "Mayaqq"
+  ],
+  "contact": {
+    "repo": "https://github.com/MayaqqDev/labyrinth-extras"
+  },
+  "license": "LGPL-3.0",
+  "icon": "assets/labyrinth-extras/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.mayaqq.labyrinthextras.LabyrinthExtras"
+    ],
+    "preLaunch": [
+      "dev.mayaqq.labyrinthextras.LabyrinthExtras"
+    ]
+  },
+  "mixins": [
+    "labyrinth-extras.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
