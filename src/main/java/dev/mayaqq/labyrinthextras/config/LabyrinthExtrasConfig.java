@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class LabyrinthExtrasConfig {
 
@@ -49,6 +51,7 @@ public class LabyrinthExtrasConfig {
         public boolean disableEndPortal = true;
         public String botToken = "";
         public String botChannel = "";
+        public HashMap<UUID, Boolean> players = new HashMap<>();
         public Config() {}
     }
 }

@@ -19,9 +19,10 @@ public class EndPortalBlockMixin {
     @Inject(method = "onEntityCollision", at = @At("HEAD"), cancellable = true)
     private void LabyrinthExtras$onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity, CallbackInfo ci) {
         if (LabyrinthExtrasConfig.CONFIG.disableEndPortal) {
-            if (entity instanceof ServerPlayerEntity && ((ServerPlayerEntity) entity).hasStatusEffect(StatusEffects.FIRE_RESISTANCE)) {
+            if (entity instanceof ServerPlayerEntity && !((ServerPlayerEntity) entity).hasStatusEffect(StatusEffects.FIRE_RESISTANCE)) {
                 ServerPlayerEntity player = (ServerPlayerEntity) entity;
                 player.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 100, 1));
+                player.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 100, 1, true, false));
             }
             ci.cancel();
         }
