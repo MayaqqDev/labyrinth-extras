@@ -32,33 +32,37 @@ public class EventRegistry {
             AtomicReference<TriState> state = new AtomicReference<>(TriState.DEFAULT);
             source.getPlayerNames().forEach(name -> {
                 ServerPlayerEntity player = LabyrinthExtras.SERVER.getPlayerManager().getPlayer(name);
-                if (ServerState.getPlayerState(player).rank == null) return;
-                switch (ServerState.getPlayerState(player).rank) {
-                    case "carodej": {
-                        if (permission.equals("labyrinthextras.rank.carodej")) {
-                            state.set(TriState.TRUE);
+                if (ServerState.getPlayerState(player).rank != null) {
+                    switch (ServerState.getPlayerState(player).rank) {
+                        case "carodej": {
+                            if (permission.equals("labyrinthextras.rank.carodej")) {
+                                state.set(TriState.TRUE);
+                            }
+                        }
+                        case "trpaslik": {
+                            if (permission.equals("labyrinthextras.rank.trpaslik")) {
+                                state.set(TriState.TRUE);
+                            }
+                        }
+                        case "elf": {
+                            if (permission.equals("labyrinthextras.rank.elf")) {
+                                state.set(TriState.TRUE);
+                            }
+                        }
+                        case "skret": {
+                            if (permission.equals("labyrinthextras.rank.skret")) {
+                                state.set(TriState.TRUE);
+                            }
+                        }
+                        case "hobit": {
+                            if (permission.equals("labyrinthextras.rank.hobit")) {
+                                state.set(TriState.TRUE);
+                            }
                         }
                     }
-                    case "trpaslik": {
-                        if (permission.equals("labyrinthextras.rank.trpaslik")) {
-                            state.set(TriState.TRUE);
-                        }
-                    }
-                    case "elf": {
-                        if (permission.equals("labyrinthextras.rank.elf")) {
-                            state.set(TriState.TRUE);
-                        }
-                    }
-                    case "skret": {
-                        if (permission.equals("labyrinthextras.rank.skret")) {
-                            state.set(TriState.TRUE);
-                        }
-                    }
-                    case "hobit": {
-                        if (permission.equals("labyrinthextras.rank.hobit")) {
-                            state.set(TriState.TRUE);
-                        }
-                    }
+                }
+                if (permission.equals("labyrinthextras.rank.clovek")) {
+                    state.set(TriState.TRUE);
                 }
             });
             return state.get();
