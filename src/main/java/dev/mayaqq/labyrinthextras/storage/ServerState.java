@@ -26,6 +26,7 @@ public class ServerState extends PersistentState {
             playerStateNbt.putBoolean("hasPvpEnabled", playerSate.hasPvpEnabled);
             playerStateNbt.putString("rank", playerSate.rank);
             playerStateNbt.putString("discordId", playerSate.discordId);
+            playerStateNbt.putLong("manualRankTime", playerSate.manualRankTime);
 
             NbtCompound kitsNbtCompound = new NbtCompound();
             playerSate.collectedKits.forEach(kitsNbtCompound::putBoolean);
@@ -46,6 +47,7 @@ public class ServerState extends PersistentState {
             playerState.hasPvpEnabled = playersTag.getCompound(key).getBoolean("hasPvpEnabled");
             playerState.rank = playersTag.getCompound(key).getString("rank");
             playerState.discordId = playersTag.getCompound(key).getString("discordId");
+            playerState.manualRankTime = playersTag.getCompound(key).getLong("manualRankTime");
 
             NbtCompound kitsTag = playersTag.getCompound(key).getCompound("collectedKits");
             kitsTag.getKeys().forEach(kitKey -> {
@@ -87,5 +89,6 @@ public class ServerState extends PersistentState {
         public HashMap<String, Boolean> collectedKits = new HashMap<>();
         public String rank = "clovek";
         public String discordId = "";
+        public Long manualRankTime = 0L;
     }
 }

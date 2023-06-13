@@ -5,6 +5,8 @@ import dev.mayaqq.labyrinthextras.config.LabyrinthExtrasConfig;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -32,7 +34,12 @@ public class Bot {
                     .addCommands(Commands.slash("players", "Zobrazí seznam hráčů na serveru"))
                     .addCommands(Commands.slash("link", "Propojí discord účet s mc účtem, udělej /link ve hře a pak sem napiš /link <kód> ze hry!")
                             .addOption(OptionType.STRING, "kód", "Kód ze hry", true)
-                            .addOption(OptionType.STRING, "nick", "Tvůj minecraft nick", true)
+                    )
+                    .addCommands(Commands.slash("rank", "Dej někomu rank!")
+                            .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+                            .addOption(OptionType.USER, "hráč", "Hráč, kterému chceš dát rank", true)
+                            .addOption(OptionType.ROLE, "rank", "Rank, který chceš dát", true)
+                            .addOption(OptionType.STRING, "uuid", "UUID hráče", true)
                     )
                 .queue();
             discordBot = bot;

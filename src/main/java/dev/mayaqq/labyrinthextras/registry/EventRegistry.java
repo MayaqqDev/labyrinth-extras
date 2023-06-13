@@ -6,6 +6,7 @@ import dev.mayaqq.labyrinthextras.discord.Bot;
 import dev.mayaqq.labyrinthextras.discord.SlashCommands;
 import dev.mayaqq.labyrinthextras.storage.ServerState;
 import dev.mayaqq.labyrinthextras.utils.FabricTaylorUtils;
+import dev.mayaqq.labyrinthextras.utils.RankUtils;
 import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -31,36 +32,6 @@ public class EventRegistry {
             }
             AtomicReference<TriState> state = new AtomicReference<>(TriState.DEFAULT);
             source.getPlayerNames().forEach(name -> {
-                ServerPlayerEntity player = LabyrinthExtras.SERVER.getPlayerManager().getPlayer(name);
-                if (ServerState.getPlayerState(player).rank != null) {
-                    switch (ServerState.getPlayerState(player).rank) {
-                        case "carodej": {
-                            if (permission.equals("labyrinthextras.rank.carodej")) {
-                                state.set(TriState.TRUE);
-                            }
-                        }
-                        case "trpaslik": {
-                            if (permission.equals("labyrinthextras.rank.trpaslik")) {
-                                state.set(TriState.TRUE);
-                            }
-                        }
-                        case "elf": {
-                            if (permission.equals("labyrinthextras.rank.elf")) {
-                                state.set(TriState.TRUE);
-                            }
-                        }
-                        case "skret": {
-                            if (permission.equals("labyrinthextras.rank.skret")) {
-                                state.set(TriState.TRUE);
-                            }
-                        }
-                        case "hobit": {
-                            if (permission.equals("labyrinthextras.rank.hobit")) {
-                                state.set(TriState.TRUE);
-                            }
-                        }
-                    }
-                }
                 if (permission.equals("labyrinthextras.rank.clovek")) {
                     state.set(TriState.TRUE);
                 }
@@ -73,11 +44,37 @@ public class EventRegistry {
             LabyrinthExtrasConfig.CONFIG.players.putIfAbsent(player.getUuid(), true);
             LabyrinthExtrasConfig.save();
 
+            // for when the player got the rank assigned by the /rank command in discord
+            try {
+                ServerState.PlayerState state = ServerState.getPlayerState(player);
+                Long time = state.manualRankTime;
+                if (time != 0) {
+                    if (System.currentTimeMillis() > time) {
+                        Bot.discordBot.getGuilds().forEach(guild -> {
+                            Member member = guild.getMemberById(state.discordId);
+                            String[] roleNames = {"Čaroděj", "Trpaslík", "Elf", "Skřet", "Hobit"};
+                            member.getRoles().forEach(role -> {
+                                for (String roleName : roleNames) {
+                                    if (role.getName().equals(roleName)) {
+                                        guild.removeRoleFromMember(member, role).queue();
+                                    }
+                                }
+                            });
+                        });
+
+                        state.rank = "clovek";
+                        state.manualRankTime = 0L;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             // set the skin of the player to their name
             String name = player.getName().getString();
-            if (name.startsWith(".") && ServerState.getPlayerState(player).hasCustomSkin) return;
-            FabricTaylorUtils.setSkin(player, () -> SkinFetcher.fetchSkinByName(name));
+            if (!(name.startsWith(".") || ServerState.getPlayerState(player).hasCustomSkin)) {
+                FabricTaylorUtils.setSkin(player, () -> SkinFetcher.fetchSkinByName(name));
+            }
             if (Bot.discordBot == null) return;
             Bot.discordBot.getPresence();
             try {
@@ -89,20 +86,25 @@ public class EventRegistry {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            RankUtils.recheckRank(player);
+            // send message to discord that the player joined
             Bot.discordBot.getGuilds().forEach(guild -> {
-                guild.getChannelById(TextChannel.class, LabyrinthExtrasConfig.CONFIG.botChannel).sendMessage("Připojil se: **" + player.getDisplayName().getString() + "**!").queue();
+                guild.getChannelById(TextChannel.class, LabyrinthExtrasConfig.CONFIG.botChannel).sendMessage("Připojil/a/o se: **" + player.getDisplayName().getString() + "**!").queue();
             });
+            // set the bot's status to the amount of players online
             Bot.discordBot.getPresence().setActivity(Activity.playing("S " + (server.getPlayerManager().getPlayerList().size() + 1) + "/" + server.getPlayerManager().getMaxPlayerCount() + " hráči!"));
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            // send message to discord that the player left
             ServerPlayerEntity player = handler.getPlayer();
             if (Bot.discordBot == null) return;
             Bot.discordBot.getGuilds().forEach(guild -> {
-                guild.getChannelById(TextChannel.class, LabyrinthExtrasConfig.CONFIG.botChannel).sendMessage("Odpojil se: **" + player.getDisplayName().getString() + "**!").queue();
+                guild.getChannelById(TextChannel.class, LabyrinthExtrasConfig.CONFIG.botChannel).sendMessage("Odpojil/a/o se: **" + player.getDisplayName().getString() + "**!").queue();
             });
             Bot.discordBot.getPresence().setActivity(Activity.playing("S " + (server.getPlayerManager().getPlayerList().size() + 1) + "/" + server.getPlayerManager().getMaxPlayerCount() + " hráči!"));
         });
         ServerMessageEvents.CHAT_MESSAGE.register((message, sender, params) -> {
+            // send message to discord when someone sends a message in chat
             if (Bot.discordBot == null) return;
             Bot.discordBot.getGuilds().forEach(guild -> {
                 guild.getChannelById(TextChannel.class, LabyrinthExtrasConfig.CONFIG.botChannel).sendMessage("**" + sender.getDisplayName().getString() + "**: " + message.getContent().getString()).queue();
@@ -110,6 +112,7 @@ public class EventRegistry {
         });
         // bot stuff
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            // more discord stuff, also set the server instance in the Main class
             LabyrinthExtras.SERVER = server;
             if (Bot.discordBot == null) return;
             Bot.discordBot.getPresence().setStatus(OnlineStatus.ONLINE);
@@ -123,10 +126,12 @@ public class EventRegistry {
             });
         });
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            // sets the bots status to idle when the server is starting
             if (Bot.discordBot == null) return;
             Bot.discordBot.getPresence().setStatus(OnlineStatus.IDLE);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            // more discord stuff
             if (Bot.discordBot == null) return;
             try {
                 Bot.discordBot.shutdownNow();
@@ -135,9 +140,9 @@ public class EventRegistry {
             }
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            // more discord stuff
             if (Bot.discordBot == null) return;
             try {
-                Bot.discordBot.getPresence().setStatus(OnlineStatus.OFFLINE);
                 // TODO: fix this, right now it breaks server shutdown
                 /*
                 Bot.discordBot.getGuilds().forEach(guild -> {

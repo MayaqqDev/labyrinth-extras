@@ -3,14 +3,19 @@ package dev.mayaqq.labyrinthextras.discord;
 import dev.mayaqq.labyrinthextras.LabyrinthExtras;
 import dev.mayaqq.labyrinthextras.commands.LinkCommand;
 import dev.mayaqq.labyrinthextras.storage.ServerState;
+import dev.mayaqq.labyrinthextras.utils.RankUtils;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SlashCommands extends ListenerAdapter {
@@ -30,19 +35,40 @@ public class SlashCommands extends ListenerAdapter {
                 }
             }
             case "link" -> {
-                String code = interaction.getOption("kód").getAsString();
-                String nick = interaction.getOption("nick").getAsString();
-                ServerPlayerEntity player = LabyrinthExtras.SERVER.getPlayerManager().getPlayer(nick);
-                if (Objects.equals(LinkCommand.links.get(player), code)) {
-                    LinkCommand.links.remove(LabyrinthExtras.SERVER.getPlayerManager().getPlayer(nick));
-                    ServerState.getPlayerState(player).rank = getRank(interaction.getMember());
-                    ServerState.getPlayerState(player).discordId = interaction.getUser().getId();
-                    try {
-                        interaction.getGuild().modifyMemberRoles(interaction.getMember(), interaction.getGuild().getRolesByName("linked", true)).queue();
-                    } catch (Exception ignored) {}
-                    interaction.reply("Účet byl úspěšně propojen!").setEphemeral(true).queue();
-                } else {
+                try {
+                    String code = interaction.getOption("kód").getAsString();
+                    ServerPlayerEntity player = LabyrinthExtras.SERVER.getPlayerManager().getPlayer(LinkCommand.links.get(code));
+                    if (Objects.equals(LinkCommand.links.get(code), player.getUuid())) {
+                        LinkCommand.links.remove(code);
+                        ServerState.getPlayerState(player).rank = getRank(interaction.getMember());
+                        ServerState.getPlayerState(player).discordId = interaction.getUser().getId();
+                        RankUtils.recheckRank(player);
+                        try {
+                            interaction.getGuild().modifyMemberRoles(interaction.getMember(), interaction.getGuild().getRolesByName("linked", true)).queue();
+                        } catch (Exception ignored) {}
+                        interaction.reply("Účet byl úspěšně propojen!").setEphemeral(true).queue();
+                    } else {
+                        interaction.reply("Kód není správný!").setEphemeral(true).queue();
+                    }
+                } catch (Exception e) {
                     interaction.reply("Kód není správný!").setEphemeral(true).queue();
+                }
+            }
+            case "rank" -> {
+                Role role = interaction.getOption("rank").getAsRole();
+                Member member = interaction.getOption("hráč").getAsMember();
+                UUID uuid = UUID.fromString(interaction.getOption("uuid").getAsString());
+                if (interaction.getMember().hasPermission(Permission.ADMINISTRATOR)) {
+                    try {
+                        interaction.getGuild().modifyMemberRoles(member, role).queue();
+                        interaction.reply("Hráči byla změněna role!").setEphemeral(true).queue();
+                        ServerPlayerEntity player = LabyrinthExtras.SERVER.getPlayerManager().getPlayer(uuid);
+                        ServerState.getPlayerState(player).manualRankTime = (long) (System.currentTimeMillis() + 2.628e+9);
+                    } catch (Exception e) {
+                        interaction.reply("Hráči se nepodařilo změnit roli!").setEphemeral(true).queue();
+                    }
+                } else {
+                    interaction.reply("Nemáš oprávnění!").setEphemeral(true).queue();
                 }
             }
         }
