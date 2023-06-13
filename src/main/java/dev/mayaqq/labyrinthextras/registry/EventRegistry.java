@@ -7,7 +7,6 @@ import dev.mayaqq.labyrinthextras.discord.SlashCommands;
 import dev.mayaqq.labyrinthextras.storage.ServerState;
 import dev.mayaqq.labyrinthextras.utils.FabricTaylorUtils;
 import dev.mayaqq.labyrinthextras.utils.RankUtils;
-import me.lucko.fabric.api.permissions.v0.PermissionCheckEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -16,7 +15,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.samo_lego.fabrictailor.util.SkinFetcher;
 
@@ -26,19 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class EventRegistry {
     public static void register() {
-        PermissionCheckEvent.EVENT.register((source, permission) -> {
-            if (source.hasPermissionLevel(4)) {
-                return TriState.TRUE;
-            }
-            AtomicReference<TriState> state = new AtomicReference<>(TriState.DEFAULT);
-            source.getPlayerNames().forEach(name -> {
-                if (permission.equals("labyrinthextras.rank.clovek")) {
-                    state.set(TriState.TRUE);
-                }
-            });
-            return state.get();
-        });
-
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.getPlayer();
             LabyrinthExtrasConfig.CONFIG.players.putIfAbsent(player.getUuid(), true);

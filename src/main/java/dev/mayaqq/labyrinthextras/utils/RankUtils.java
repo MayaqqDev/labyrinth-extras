@@ -14,7 +14,7 @@ public class RankUtils {
             LuckPerms api = LuckPermsProvider.get();
             User user = api.getPlayerAdapter(ServerPlayerEntity.class).getUser(player);
             for (Node node : user.data().toCollection()) {
-                String[] ranks = {"carodej", "trpaslik", "elf", "skret", "hobit"};
+                String[] ranks = {"carodej", "trpaslik", "elf", "skret", "hobit", "default"};
                 for (String rank : ranks) {
                     if (node.getKey().equals("group." + rank)) {
                         user.data().remove(node);
@@ -23,6 +23,8 @@ public class RankUtils {
             }
             if (!state.rank.equals("clovek")) {
                 user.data().add(Node.builder("group." + state.rank).build());
+            } else {
+                user.data().add(Node.builder("group.default").build());
             }
             api.getUserManager().saveUser(user);
         }
