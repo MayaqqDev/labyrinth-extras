@@ -13,9 +13,17 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.mixin.block.BlockMixin;
+import net.fabricmc.fabric.mixin.block.BlockStateMixin;
+import net.minecraft.block.AbstractRailBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.math.BlockPos;
 import org.samo_lego.fabrictailor.util.SkinFetcher;
 
 import java.awt.*;
@@ -24,6 +32,19 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class EventRegistry {
     public static void register() {
+
+        UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            BlockState state = world.getBlockState(hitResult.getBlockPos());
+            if (state.getBlock() instanceof AbstractRailBlock && !world.isClient() && player.isSneaking() && player.getStackInHand(hand).isEmpty()) {
+                BlockPos pos = hitResult.getBlockPos();
+                MinecartEntity minecart = new MinecartEntity(world, pos.getX(), pos.getY(), pos.getZ());
+                world.spawnEntity(minecart);
+                return ActionResult.SUCCESS;
+            } else {
+                return ActionResult.PASS;
+            }
+        });
+
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.getPlayer();
             LabyrinthExtrasConfig.CONFIG.players.putIfAbsent(player.getUuid(), true);
@@ -58,7 +79,7 @@ public class EventRegistry {
             // set the skin of the player to their name
             String name = player.getName().getString();
             if (!(name.startsWith(".") || ServerState.getPlayerState(player).hasCustomSkin)) {
-                //FabricTaylorUtils.setSkin(player, () -> SkinFetcher.fetchSkinByName(name));
+                FabricTaylorUtils.setSkin(player, () -> SkinFetcher.fetchSkinByName(name));
             }
             if (Bot.discordBot == null) return;
             Bot.discordBot.getPresence();

@@ -27,7 +27,6 @@ public class ServerState extends PersistentState {
             playerStateNbt.putString("discordId", playerSate.discordId);
             playerStateNbt.putLong("manualRankTime", playerSate.manualRankTime);
             playerStateNbt.putBoolean("hasCollectedKit", playerSate.hasCollectedKit);
-            playerStateNbt.putBoolean("hasMinecart", playerSate.hasMinecart);
 
             playersNbtCompound.put(String.valueOf(UUID), playerStateNbt);
         });
@@ -45,7 +44,6 @@ public class ServerState extends PersistentState {
             playerState.discordId = playersTag.getCompound(key).getString("discordId");
             playerState.manualRankTime = playersTag.getCompound(key).getLong("manualRankTime");
             playerState.hasCollectedKit = playersTag.getCompound(key).getBoolean("hasCollectedKit");
-            playerState.hasMinecart = playersTag.getCompound(key).getBoolean("hasMinecart");
 
             UUID uuid = UUID.fromString(key);
             serverState.players.put(uuid, playerState);
@@ -82,6 +80,5 @@ public class ServerState extends PersistentState {
         public String rank = "clovek";
         public String discordId = "";
         public Long manualRankTime = 0L;
-        public boolean hasMinecart = false;
     }
 }
